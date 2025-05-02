@@ -6,6 +6,13 @@ from app.server.comfort_index_module import preprocess, predict, load_model, loa
 sensor_cache = {}
 required_features = ['temperature', 'humidity', 'co2']
 
+area_map = {
+    "보드": 31.59,
+    "왼쪽 뒤": 109.21,
+    "안쪽벽 중앙": 25.13,
+    "8인 책상": 64.65
+}
+
 def update_sensor_data(location, sensor_type, value):
     if location not in sensor_cache:
         sensor_cache[location] = {}
@@ -18,15 +25,16 @@ def update_sensor_data(location, sensor_type, value):
         iso_model = load_iso_model()
         pred_di = predict(model, df, iso_model=iso_model)[0]
 
-        # 🌡 후처리 보정 적용 (쾌적도 라벨 붙이기)
         t = df['temperature'].iloc[0]
         h = df['humidity'].iloc[0]
         c = df['co2'].iloc[0]
-        final_di, comfort_label = classify_environment(pred_di, t, h, c)
+        area = area_map.get(location, 50)
 
+        ecdi = compute_ecdi(pred_di, c, area)
+        label = ecdi_to_label(ecdi)
 
-        print(f"📢 최종 DI: {final_di:.2f} → 상태: {comfort_label}")
-        send_prediction_result(location, final_di)
+        print(f"📢 최종 ECDI: {ecdi:.2f} → 상태: {label}")
+        send_prediction_result(location, ecdi)
         sensor_cache[location].clear()
 
 def environment_score(temp, humi, co2, occ_density=None):
@@ -48,30 +56,28 @@ def environment_score(temp, humi, co2, occ_density=None):
     return score
 
 
-def di_to_label(di):
-    if di < 65:
+def ecdi_to_label(ecdi):
+    if ecdi < 63:
+        return "❄️ 매우 추움"
+    elif ecdi < 67:
+        return "🥶 추움"
+    elif ecdi < 70:
         return "😊 쾌적"
-    elif di < 70:
-        return "🙂 보통"
-    elif di < 75:
-        return "😓 약간 더움"
-    elif di < 80:
-        return "🥵 불쾌"
+    elif ecdi < 73:
+        return "🙂 약간 더움"
+    elif ecdi < 76:
+        return "😓 불쾌"
+    elif ecdi < 80:
+        return "🥵 매우 불쾌"
     else:
-        return "🔥 매우 불쾌"
+        return "🔥 극심한 불쾌"
 
-def classify_environment(di, temp, humi, co2, occ_density=None):
-    base_label = di_to_label(di)
-    env_score = environment_score(temp, humi, co2, occ_density)
 
-    if env_score <= -3:
-        return di, "❄️ 매우 불쾌 (환경 악화)"
-    elif env_score == -2:
-        return di, "🥶 불쾌 요소 있음"
-    elif env_score == -1:
-        return di, f"{base_label} + 경미한 불쾌"
-    else:
-        return di, base_label
+    
+def compute_ecdi(di, co2, area):
+    co2_density = co2 / area
+    ecdi = di + 0.01 * co2_density  # 필요시 계수 튜닝
+    return round(ecdi, 2)
 
 
 
