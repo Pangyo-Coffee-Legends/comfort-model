@@ -41,8 +41,8 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             cd ~/comfort-model
-            docker compose pull || true
-            docker compose up -d --build
+            docker compose pull comfort-model-api || true
+            docker compose up -d --build --no-deps --force-recreate comfort-model-api
 
       - name: Health check
         uses: appleboy/ssh-action@master
