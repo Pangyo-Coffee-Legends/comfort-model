@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  comfort-model-api:
+    build: .
+    container_name: comfort-model-api
+    ports:
+      - "10264:8000"  
+    restart: always

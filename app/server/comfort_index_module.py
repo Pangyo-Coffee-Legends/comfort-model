@@ -1,36 +1,27 @@
-from sklearn.preprocessing import RobustScaler
-import pandas as pd
 import joblib
+import numpy as np
+import pandas as pd
+import os
+os.chdir(os.path.dirname(__file__) or '.')
 
-# 불쾌지수 공식
-def compute_discomfort_index(t, rh):
-    return 0.81 * t + 0.01 * rh * (0.99 * t - 14.3) + 46.3
+pipeline = joblib.load('../../scripts/models/kmeans_pipeline.pkl')
 
-# 전처리 함수
-def preprocess(raw_df):
-    # 👉 결측치 제거 또는 단순 평균 보간 (센서 데이터는 결측 거의 없음 가정)
-    raw_df = raw_df.fillna(raw_df.mean(numeric_only=True))
+_cluster_map = {0:'춥고 건조',1:'덥고 습함',2:'최적 쾌적'}
+_area_map    = {
+    "보드":31.59, "왼쪽 뒤":109.21,
+    "안쪽벽 중앙":25.13, "8인 책상":64.65
+}
 
-    # 스케일링 (학습에 사용한 RobustScaler 그대로 사용)
-    scaler = joblib.load("app/server/scaler.pkl")
-    raw_df[['temperature', 'humidity', 'co2']] = scaler.transform(raw_df[['temperature', 'humidity', 'co2']])
-    return raw_df
+def preprocess(df: pd.DataFrame) -> pd.DataFrame:
+    loc = df.loc[0,'location']
+    if loc not in _area_map:
+        raise ValueError(f"Unknown location: {loc}")
+    df = df.copy()
+    df['area'] = _area_map[loc]
+    df['co2_per_area'] = df['co2'] / df['area']
+    return df[['co2','temperature','humidity','co2_per_area']]
 
-def load_model(path='app/server/model.pkl'):
-    return joblib.load(path)
-
-def load_iso_model(path='app/server/iso_model.pkl'):
-    return joblib.load(path)
-
-# 예측 수행
-def predict(model, df, iso_model=None):
-    features = ['temperature', 'humidity', 'co2']
-    X = df[features]
-    pred = model.predict(X)
-    if iso_model:
-        pred = iso_model.predict(pred)
-    return pred
-
-# 모델 저장 (사용 안 해도 유지)
-def save_model(model, path='app/server/model.pkl'):
-    joblib.dump(model, path)
+def predict_pipeline(df: pd.DataFrame) -> str:
+    X = preprocess(df).values
+    idx = pipeline.predict(X)[0]
+    return _cluster_map[idx]
