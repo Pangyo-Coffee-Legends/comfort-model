@@ -3,8 +3,13 @@ FROM python:3.12-slim
 WORKDIR /app
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends build-essential && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get install -y --no-install-recommends \
+      build-essential \        # gcc, g++, make 등
+      python3-dev \            # Python C API 헤더
+      cmake \                  # xgboost 빌드용
+      libatlas-base-dev \      # numpy/scipy 최적화
+      libgomp1 \               # OpenMP 지원(xgboost)  
+    && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
 RUN pip install --upgrade pip setuptools wheel \
@@ -14,4 +19,5 @@ COPY app ./app
 COPY scripts ./scripts
 
 EXPOSE 8000
+
 CMD ["uvicorn", "app.server.fast_server:app", "--host", "0.0.0.0", "--port", "8000"]
