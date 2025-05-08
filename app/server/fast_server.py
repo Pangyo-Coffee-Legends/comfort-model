@@ -12,7 +12,7 @@ class SensorPayload(BaseModel):
     sensor_type: str
     value:       float
 
-@app.post("/sensor")
+@app.post("/api/v1/sensor")
 def receive_sensor_data(payload: SensorPayload):
     result = update_sensor_data(
         payload.location,

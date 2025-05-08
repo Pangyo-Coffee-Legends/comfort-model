@@ -1,6 +1,9 @@
 from datetime import datetime
+import requests
 import pandas as pd
 from app.server.comfort_index_module import preprocess, predict_pipeline
+
+RULE_ENGINE_URL = "http://localhost:10263/api/v1/comfort"
 
 sensor_cache     = {}
 required_fields = ['temperature','humidity','co2']
@@ -28,7 +31,6 @@ def update_sensor_data(location, sensor_type, value):
         try:
             label = predict_pipeline(df_raw)
         except ValueError as e:
-            # 위치 매핑 오류 등
             return {'error': str(e)}
 
         co2 = cache['co2']
@@ -37,14 +39,21 @@ def update_sensor_data(location, sensor_type, value):
             'location':       location,
             'temperature':    cache['temperature'],
             'humidity':       cache['humidity'],
-            'co2':            co2,
             'comfort_index':  label,
-            'co2_status':     co2_status
+            'co2':            co2,
+            'co2_comment':     co2_status
         }
 
-        # 전송 및 캐시 초기화
-        print(f"📤 예측 전송: {result}")
+        try:
+            resp = requests.post(RULE_ENGINE_URL, json=result, timeout=5)
+            resp.raise_for_status()
+            print(f"✅ 룰엔진 전송 성공({resp.status_code}): {result}")
+        except Exception as e:
+            print(f"❌ 룰엔진 전송 실패: {e} | payload={result}")
+
+        # 4) 캐시 초기화
         cache.clear()
+
         return result
     else:
         # 아직 모자란 필드 알려주기
