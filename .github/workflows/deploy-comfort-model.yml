@@ -28,12 +28,7 @@ jobs:
           username: ${{ secrets.SSH_ID }}
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          source: |
-            app
-            scripts
-            requirements.txt
-            Dockerfile
-            docker-compose.yml
+          source: "app scripts requirements.txt Dockerfile docker-compose.yml"
           target: ~/comfort-model
 
       - name: Build and run docker-compose
