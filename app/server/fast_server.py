@@ -20,3 +20,7 @@ def receive_sensor_data(payload: SensorPayload):
         payload.value
     )
     return result
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
