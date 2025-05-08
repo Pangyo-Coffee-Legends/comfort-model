@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
@@ -10,9 +10,11 @@ RUN apt-get update && \
       libatlas-base-dev \
       libgomp1 && \
     rm -rf /var/lib/apt/lists/*
+
+
 COPY requirements.txt .
 RUN pip install --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir --only-binary=:all: -r requirements.txt
 
 COPY app ./app
 COPY scripts ./scripts
