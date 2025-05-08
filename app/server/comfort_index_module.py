@@ -22,6 +22,6 @@ def preprocess(df: pd.DataFrame) -> pd.DataFrame:
     return df[['co2','temperature','humidity','co2_per_area']]
 
 def predict_pipeline(df: pd.DataFrame) -> str:
-    X = preprocess(df).values
+    X = preprocess(df)
     idx = pipeline.predict(X)[0]
     return _cluster_map[idx]
