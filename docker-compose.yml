@@ -6,4 +6,7 @@ services:
     network_mode: host
     restart: always
     environment:
-      - RULE_ENGINE_URL=http://localhost:10263/api/v1/comfort
+      - RULE_ENGINE_URL=http://localhost:10263/api/v1/comfort    
+      - TZ=Asia/Seoul
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
