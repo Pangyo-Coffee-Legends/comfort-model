@@ -5,5 +5,9 @@ services:
     build: .
     container_name: comfort-model-api
     ports:
-      - "10264:8000"  
+      - "10264:8000"
     restart: always
+    environment:
+      - RULE_ENGINE_URL=http://host.docker.internal:10263/api/v1/comfort
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

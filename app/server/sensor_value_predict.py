@@ -3,7 +3,12 @@ import requests
 import pandas as pd
 from app.server.comfort_index_module import preprocess, predict_pipeline
 
-RULE_ENGINE_URL = "http://localhost:10263/api/v1/comfort"
+import os
+
+RULE_ENGINE_URL = os.getenv(
+    "RULE_ENGINE_URL",
+    "http://localhost:10263/api/v1/comfort"   # 기본값(로컬 개발)
+)
 
 sensor_cache     = {}
 required_fields = ['temperature','humidity','co2']

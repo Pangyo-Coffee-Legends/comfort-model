@@ -32,7 +32,7 @@ jobs:
           target: "~/comfort-model"
           strip_components: 1   
 
-      - name: Build and run docker-compose
+      - name: Deploy via docker-compose
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SSH_IP }}
@@ -41,9 +41,9 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             cd ~/comfort-model
-            docker compose pull comfort-model-api || true
-            docker compose rm -f comfort-model-api || true            
-            docker compose up -d --build --no-deps --force-recreate comfort-model-api
+            docker compose rm -f comfort-model-api || true
+            docker compose up -d --build --force-recreate comfort-model-api
+
 
       - name: Health check
         uses: appleboy/ssh-action@master
